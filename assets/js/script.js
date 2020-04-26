@@ -30,15 +30,13 @@ var initialize = function() {
 }
 
 var getCurrentWeather = function(str) {
-   // replace spaces with nothing
-   currentCity = str.replace(/\s/g,'');
+
+   // build api to pull based on city and state, though it will pull just on city, as long as it is in the United States
    var apiUrl = "https://api.openweathermap.org/data/2.5/weather?q=" + currentCity + ",usa&units=imperial" + APPID;
    var lng;
    var lat;
 
-   // save the information to localSettings
-   saveLoc(currentCity);
-
+   // fetch the information
    fetch(apiUrl)
       .then(function(response) {
          if (response.ok) {
@@ -47,7 +45,7 @@ var getCurrentWeather = function(str) {
                lng = data.coord.lon;
                lat = data.coord.lat;
 
-
+               // start building the rows and such
                var rowCurrentWeather = document.createElement("div");
                rowCurrentWeather.classList = "row no-gutter";
                divWeather.append(rowCurrentWeather);
@@ -80,7 +78,7 @@ var getCurrentWeather = function(str) {
                divCurrWind.innerHTML = "Wind Speed: " + data.wind.speed + " MPH";
                divCardBodyCurrent.append(divCurrWind);
                
-               // UV Index information comes from a different place, so make the pull now
+               // UV Index information comes from a different place, so make the pull now with data from latitude and longitude
                var apiUVUrl = "https://api.openweathermap.org/data/2.5/uvi?lat=" + data.coord.lat + "&lon=" + data.coord.lon + APPID;
 
                fetch(apiUVUrl)
@@ -97,14 +95,16 @@ var getCurrentWeather = function(str) {
                               var spanUV = document.createElement("span");
                               spanUV.class = "card-text";
                               spanUV.innerHTML = data.value;
-                              if (idxUV <= 3) {
+                              if (idxUV < 3) {
                                  backgroundColor = "green";
-                              } else if (idxUV >= 4 && idxUV <= 6) {
-                                 backgroundColor = "yellow";
-                              } else if (idxUV >=7 && idxUV <= 8) {
+                              } else if (idxUV >= 3 && idxUV < 6) {
+                                 backgroundColor = "gray";
+                              } else if (idxUV >= 6 && idxUV < 8) {
                                  backgroundColor = "orange";
-                              } else if (idxUV > 8) {
+                              } else if (idxUV >= 8 && idxUV < 11) {
                                  backgroundColor = "red";
+                              } else {
+                                 backgroundColor = "purple";
                               }
                               spanUV.style.backgroundColor = backgroundColor;
                               spanUV.style.color = "white";
@@ -118,7 +118,7 @@ var getCurrentWeather = function(str) {
                            });
                      }
                   });
-               // call the get forcast and create the forcast cards
+               // call the get forecast and create the forcast cards
                getForecast(lat, lng);
             });
          } else {
@@ -148,18 +148,16 @@ var getCurrentWeather = function(str) {
    });
 }
 
+// pull the 5-day forecast
 var getForecast = function(lat, lon) {
    // create api to get forecast
    var apiUrl = "https://api.openweathermap.org/data/2.5/onecall?lat=" + lat + "&lon=" + lon + "&units=imperial" + APPID;
 
-
-
-
    fetch(apiUrl).then(function(response) {
       if (response.ok) {
 
+         // build the display of 5-day forecast so it shows in horizontal cards
          var rowForecast = document.createElement("div");
-         //rowForecast.classList = "row no-gutter";
          rowForecast.classList = "row-cols-4 no-gutter";
          divWeather.append(rowForecast);
 
@@ -205,16 +203,18 @@ var getForecast = function(lat, lon) {
 
                var divUV = document.createElement("div");
                divUV.classList = "card-text";
-               var uvi = parseFloat(data.daily[i].uvi);
+               var idxUV = parseFloat(data.daily[i].uvi);
                var backgroundColor;
-               if (uvi <= 3) {
+               if (idxUV < 3) {
                   backgroundColor = "green";
-               } else if (uvi >= 4 && uvi <= 6) {
-                  backgroundColor = "yellow";
-               } else if (uvi >= 7 && uvi <= 8) {
-                  backgoundColor = "orange";
-               } else if (uvi >=9) {
+               } else if (idxUV >= 3 && idxUV < 6) {
+                  backgroundColor = "gray";
+               } else if (idxUV >= 6 && idxUV < 8) {
+                  backgroundColor = "orange";
+               } else if (idxUV >= 8 && idxUV < 11) {
                   backgroundColor = "red";
+               } else {
+                  backgroundColor = "purple";
                }
                divUV.innerHTML = "UV: ";
 
@@ -236,16 +236,16 @@ var getForecast = function(lat, lon) {
    });
 }
 
+// clear any wather on the screen
 var clearCurrent = function() {
-   // clear any weather on the screen
   $("#weather").empty();
 }
 
 
 // event handlers
+// search button was clicked, so clear previous weather information and pull new
 var btnSearchHandler = function(event) {
    event.preventDefault();
-
 
    clearCurrent();
    currentCity = inputSearch.value;
@@ -257,6 +257,7 @@ var btnSearchHandler = function(event) {
    }
 }
 
+// build the list of previously searched cities
 var showCities = function() {
    if (cities) {
       $(inputEl).empty();
@@ -303,6 +304,4 @@ $(document).on("click", "#loc-btn", function() {
 })
 
 // fire off functions
-//getCurrentWeather();
-//getForecast();
 initialize();
