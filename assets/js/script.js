@@ -2,100 +2,151 @@
 var divWeather = document.querySelector("#weather");
 const APPID = "&APPID=5fdccbd9d0af61e0aa359962e7e15555"
 var zip = "78608";
+var btnSearch = document.querySelector("#btnSearch");
+var inputSearch = document.querySelector("#searchinput");
+var inputEl = document.querySelector("#previousSearches");
+var cities = [];
+var currentCity = "";
 
 // functions
-var getCurrentWeather = function() {
-   var apiUrl = "http://api.openweathermap.org/data/2.5/weather?zip="+ zip +"&units=imperial" + APPID;
+var initialize = function() {
+   // get locations from localstorage
+   cities = JSON.parse(localStorage.getItem("wdcities"));
+   console.log(cities);
+
+   // display hyperlink buttons for preavious searches
+   if (cities) {
+      // get the last city so we can display the weather
+      if (cities.length === 0) {
+         currentCity = cities[0];
+      } else {
+      currentCity = cities[cities.length - 1];
+      }
+      showCities();
+      getCurrentWeather(currentCity);
+   } else {
+      // default to Austin,TX if no information
+      getCurrentWeather("Austin,TX");
+   }
+}
+
+var getCurrentWeather = function(str) {
+   currentCity = str.replace(/\s/g,'')
+   var apiUrl = "http://api.openweathermap.org/data/2.5/weather?q=" + currentCity + ",usa&units=imperial" + APPID;
    var lng;
    var lat;
-   
-   
 
-   fetch(apiUrl).then(function(response) {
-      if (response.ok) {
-         response.json().then(function(data) {
-            lng = data.coord.lon;
-            lat = data.coord.lat;
 
+   saveLoc(currentCity);
+
+   fetch(apiUrl)
+      .then(function(response) {
+         if (response.ok) {
+            response.json().then(function(data) {
+               lng = data.coord.lon;
+               lat = data.coord.lat;
+
+               console.log(data);
+
+               var rowCurrentWeather = document.createElement("div");
+               rowCurrentWeather.classList = "row no-gutter";
+               divWeather.append(rowCurrentWeather);
+
+               var divCardCurrent = document.createElement("div");
+               divCardCurrent.classList = "card col-12";
+               rowCurrentWeather.append(divCardCurrent);
+
+               var divCardBodyCurrent = document.createElement("div");
+               divCardBodyCurrent.classList = "card-body";
+               divCardCurrent.append(divCardBodyCurrent);
+
+               var titleCurrent = document.createElement("h5");
+               titleCurrent.classList = "card-title";
+               titleCurrent.innerHTML = data.name + " (" + moment(new Date()).format("MM/DD/YYYY") + ") <img class='card-image' src='https://openweathermap.org/img/wn/" + data.weather[0].icon + ".png'>";
+               divCardBodyCurrent.append(titleCurrent);
+
+               var divCurrTemp = document.createElement("div");
+               divCurrTemp.classList = "card-text";
+               divCurrTemp.innerHTML = "Temperature: " + data.main.temp + "&#8457;";
+               divCardBodyCurrent.append(divCurrTemp);
+
+               var divCurrHumidity = document.createElement("div");
+               divCurrHumidity.classList = "card-text";
+               divCurrHumidity.innerHTML = "Humidity: " + data.main.humidity + "%";
+               divCardBodyCurrent.append(divCurrHumidity);
+
+               var divCurrWind = document.createElement("div");
+               divCurrWind.classList = "card-text";
+               divCurrWind.innerHTML = "Wind Speed: " + data.wind.speed + " MPH";
+               divCardBodyCurrent.append(divCurrWind);
+               
+               // UV Index information comes from a different place, so make the pull now
+               var apiUVUrl = "http://api.openweathermap.org/data/2.5/uvi?lat=" + data.coord.lat + "&lon=" + data.coord.lon + APPID;
+
+               fetch(apiUVUrl)
+                  .then(function(response) {
+                     if(response.ok) {
+                        response.json()
+                           .then(function(data) {
+                              console.log(data);
+                              var backgroundColor;
+                              var idxUV = parseFloat(data.value);
+                              var divCurrUV = document.createElement("div");
+                              divCurrUV.class = "card-text";
+                              divCurrUV.innerHTML = "UV Index: ";
+                              
+                              var spanUV = document.createElement("span");
+                              spanUV.class = "card-text";
+                              spanUV.innerHTML = data.value;
+                              if (idxUV <= 3) {
+                                 backgroundColor = "green";
+                              } else if (idxUV >= 4 && idxUV <= 6) {
+                                 backgroundColor = "yellow";
+                              } else if (idxUV >=7 && idxUV <= 8) {
+                                 backgroundColor = "orange";
+                              } else if (idxUV > 8) {
+                                 backgroundColor = "red";
+                              }
+                              spanUV.style.backgroundColor = backgroundColor;
+                              spanUV.style.color = "white";
+                              spanUV.style.padding = "3px";
+                              spanUV.style.borderRadius = "5px";
+                              spanUV.style.fontFamily = "Arial";
+                              spanUV.style.fontSize = "12px";
+
+                              divCurrUV.append(spanUV);
+                              divCardBodyCurrent.append(divCurrUV);
+                           });
+                     }
+                  });
+               // call the get forcast and create the forcast cards
+               getForecast(lat, lng);
+            });
+         } else {
+            //alert("error will robinson, error!");
             var rowCurrentWeather = document.createElement("div");
             rowCurrentWeather.classList = "row no-gutter";
             divWeather.append(rowCurrentWeather);
-
+   
             var divCardCurrent = document.createElement("div");
             divCardCurrent.classList = "card col-12";
             rowCurrentWeather.append(divCardCurrent);
-
+   
             var divCardBodyCurrent = document.createElement("div");
-            divCardBodyCurrent.classList = "card-body";
+            divCardBodyCurrent.classList = "card-body text-white bg-danger";
             divCardCurrent.append(divCardBodyCurrent);
-
+   
             var titleCurrent = document.createElement("h5");
             titleCurrent.classList = "card-title";
-            titleCurrent.innerHTML = data.name + " (" + moment(new Date()).format("MM/DD/YYYY") + ") <img class='card-image' src='https://openweathermap.org/img/wn/" + data.weather[0].icon + ".png'>";
+            titleCurrent.innerHTML = "The openweather api was unable to find your city based on the information given.  Please try again.";
             divCardBodyCurrent.append(titleCurrent);
 
-            var divCurrTemp = document.createElement("div");
-            divCurrTemp.classList = "card-text";
-            divCurrTemp.innerHTML = "Temperature: " + data.main.temp + "&#8457;";
-            divCardBodyCurrent.append(divCurrTemp);
-
-            var divCurrHumidity = document.createElement("div");
-            divCurrHumidity.classList = "card-text";
-            divCurrHumidity.innerHTML = "Humidity: " + data.main.humidity + "%";
-            divCardBodyCurrent.append(divCurrHumidity);
-
-            var divCurrWind = document.createElement("div");
-            divCurrWind.classList = "card-text";
-            divCurrWind.innerHTML = "Wind Speed: " + data.wind.speed + " MPH";
-            divCardBodyCurrent.append(divCurrWind);
-            
-            // UV Index information comes from a different place, so make the pull now
-            var apiUVUrl = "http://api.openweathermap.org/data/2.5/uvi?lat=" + data.coord.lat + "&lon=" + data.coord.lon + APPID;
-
-            fetch(apiUVUrl)
-               .then(function(response) {
-                  if(response.ok) {
-                     response.json()
-                        .then(function(data) {
-                           var backgroundColor;
-                           var idxUV = parseFloat(data.value);
-                           var divCurrUV = document.createElement("div");
-                           divCurrUV.class = "card-text";
-                           divCurrUV.innerHTML = "UV Index: ";
-                           
-                           var spanUV = document.createElement("span");
-                           spanUV.class = "card-text";
-                           spanUV.innerHTML = data.value;
-                           if (idxUV <= 3) {
-                              backgroundColor = "green";
-                           } else if (idxUV >= 4 && idxUV <= 6) {
-                              backgroundColor = "yellow";
-                           } else if (idxUV >=7 && idxUV <= 8) {
-                              backgroundColor = "orange";
-                           } else if (idxUV > 8) {
-                              backgroundColor = "red";
-                           }
-                           spanUV.style.backgroundColor = backgroundColor;
-                           spanUV.style.color = "white";
-                           spanUV.style.padding = "3px";
-                           spanUV.style.borderRadius = "5px";
-                           spanUV.style.fontFamily = "Arial";
-                           spanUV.style.fontSize = "12px";
-
-                           divCurrUV.append(spanUV);
-                           divCardBodyCurrent.append(divCurrUV);
-                        });
-                  }
-               });
-            // call the get forcast and create the forcast cards
-            getForecast(lat, lng);
-         });
-      }
-      
+            inputSearch.innerHTML = "";
+         }
+      })
+      .catch(function(error) {
+         console.log(error);
    });
-
-   
-   
 }
 
 var getForecast = function(lat, lon) {
@@ -110,7 +161,8 @@ var getForecast = function(lat, lon) {
       if (response.ok) {
 
          var rowForecast = document.createElement("div");
-         rowForecast.classList = "row no-gutter";
+         //rowForecast.classList = "row no-gutter";
+         rowForecast.classList = "row-cols-4 no-gutter";
          divWeather.append(rowForecast);
 
          var divCardColumns = document.createElement("div");
@@ -118,7 +170,7 @@ var getForecast = function(lat, lon) {
          rowForecast.append(divCardColumns);
 
          response.json().then(function(data) {
-            console.log(data);
+            //console.log(data);
             
             for (var i = 1; i < 6; i++) {
                var divCardFore = document.createElement("div");
@@ -182,8 +234,8 @@ var getForecast = function(lat, lon) {
                divForeCardBody.append(divUV);
 
                //console.log(moment(data.list[i].dt_txt).format("MMM Do YYYY"));
-               console.log(data.daily[i]);
-               console.log(moment.unix(data.daily[i].dt).format("MMM Do YYYY"));
+               //console.log(data.daily[i]);
+               //console.log(moment.unix(data.daily[i].dt).format("MMM Do YYYY"));
             }
             
          });
@@ -191,13 +243,75 @@ var getForecast = function(lat, lon) {
    });
 }
 
+var clearCurrent = function() {
+   // clear any weather on the screen
+  $("#weather").empty();
+}
+
 
 // event handlers
+var btnSearchHandler = function(event) {
+   event.preventDefault();
 
+
+   clearCurrent();
+   currentCity = inputSearch.value;
+   if (currentCity !== "") {
+      clearCurrent();
+      saveLoc(currentCity);
+      inputSearch.value = "";
+      getCurrentWeather(currentCity);
+   }
+}
+
+var showCities = function() {
+   console.log("Entered showCities function");
+   if (cities) {
+      console.log(cities);
+      $(inputEl).empty();
+      var btns = document.createElement("div");
+      btns.classList = "list-group";
+      // loop through cities and add as <a> to the list
+      for (var i = 0; i < cities.length; i++) {
+         var theBtn = document.createElement("a");
+         theBtn.setAttribute("href","#");
+         theBtn.setAttribute("id","loc-btn");
+         theBtn.textContent = cities[i];
+         if (cities[i] === currentCity) {
+            theBtn.classList = "list-group-item list-group-item-action active";
+         } else {
+            theBtn.classList = "list-group-item list-group-item-action";
+         }
+         btns.prepend(theBtn)
+      }
+      $("#previousSearches").append(btns);
+   }
+
+}
+
+// add the location to the locations array
+var saveLoc = function(loc) {
+   if (cities === null) {
+      cities = [loc];
+   } else if (cities.indexOf(loc) === -1) {
+      cities.push(loc);
+   }
+
+   // save the array to localstorage
+   localStorage.setItem("wdcities", JSON.stringify(cities));
+   showCities();
+}
 
 // event listeners
-
+btnSearch.addEventListener("click", btnSearchHandler);
+$(document).on("click", "#loc-btn", function() {
+   clearCurrent();
+   currentCity = $(this).text();
+   showCities();
+   getCurrentWeather(currentCity);
+})
 
 // fire off functions
-getCurrentWeather();
+//getCurrentWeather();
 //getForecast();
+initialize();
