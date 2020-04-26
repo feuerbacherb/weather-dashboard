@@ -12,7 +12,6 @@ var currentCity = "";
 var initialize = function() {
    // get locations from localstorage
    cities = JSON.parse(localStorage.getItem("wdcities"));
-   console.log(cities);
 
    // display hyperlink buttons for preavious searches
    if (cities) {
@@ -31,22 +30,23 @@ var initialize = function() {
 }
 
 var getCurrentWeather = function(str) {
-   currentCity = str.replace(/\s/g,'')
+   // replace spaces with nothing
+   currentCity = str.replace(/\s/g,'');
    var apiUrl = "https://api.openweathermap.org/data/2.5/weather?q=" + currentCity + ",usa&units=imperial" + APPID;
    var lng;
    var lat;
 
-
+   // save the information to localSettings
    saveLoc(currentCity);
 
    fetch(apiUrl)
       .then(function(response) {
          if (response.ok) {
             response.json().then(function(data) {
+               // save the lat and lon to use for forecast
                lng = data.coord.lon;
                lat = data.coord.lat;
 
-               console.log(data);
 
                var rowCurrentWeather = document.createElement("div");
                rowCurrentWeather.classList = "row no-gutter";
@@ -88,7 +88,6 @@ var getCurrentWeather = function(str) {
                      if(response.ok) {
                         response.json()
                            .then(function(data) {
-                              console.log(data);
                               var backgroundColor;
                               var idxUV = parseFloat(data.value);
                               var divCurrUV = document.createElement("div");
@@ -157,7 +156,6 @@ var getForecast = function(lat, lon) {
 
 
    fetch(apiUrl).then(function(response) {
-      //console.log(response);
       if (response.ok) {
 
          var rowForecast = document.createElement("div");
@@ -170,7 +168,6 @@ var getForecast = function(lat, lon) {
          rowForecast.append(divCardColumns);
 
          response.json().then(function(data) {
-            //console.log(data);
             
             for (var i = 1; i < 6; i++) {
                var divCardFore = document.createElement("div");
@@ -232,10 +229,6 @@ var getForecast = function(lat, lon) {
                divUV.append(spanUV);
 
                divForeCardBody.append(divUV);
-
-               //console.log(moment(data.list[i].dt_txt).format("MMM Do YYYY"));
-               //console.log(data.daily[i]);
-               //console.log(moment.unix(data.daily[i].dt).format("MMM Do YYYY"));
             }
             
          });
@@ -265,9 +258,7 @@ var btnSearchHandler = function(event) {
 }
 
 var showCities = function() {
-   console.log("Entered showCities function");
    if (cities) {
-      console.log(cities);
       $(inputEl).empty();
       var btns = document.createElement("div");
       btns.classList = "list-group";
