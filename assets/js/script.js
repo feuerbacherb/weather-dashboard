@@ -32,7 +32,7 @@ var initialize = function() {
 
 var getCurrentWeather = function(str) {
    currentCity = str.replace(/\s/g,'')
-   var apiUrl = "http://api.openweathermap.org/data/2.5/weather?q=" + currentCity + ",usa&units=imperial" + APPID;
+   var apiUrl = "https://api.openweathermap.org/data/2.5/weather?q=" + currentCity + ",usa&units=imperial" + APPID;
    var lng;
    var lat;
 
@@ -81,7 +81,7 @@ var getCurrentWeather = function(str) {
                divCardBodyCurrent.append(divCurrWind);
                
                // UV Index information comes from a different place, so make the pull now
-               var apiUVUrl = "http://api.openweathermap.org/data/2.5/uvi?lat=" + data.coord.lat + "&lon=" + data.coord.lon + APPID;
+               var apiUVUrl = "https://api.openweathermap.org/data/2.5/uvi?lat=" + data.coord.lat + "&lon=" + data.coord.lon + APPID;
 
                fetch(apiUVUrl)
                   .then(function(response) {
@@ -151,7 +151,7 @@ var getCurrentWeather = function(str) {
 
 var getForecast = function(lat, lon) {
    // create api to get forecast
-   var apiUrl = "http://api.openweathermap.org/data/2.5/onecall?lat=" + lat + "&lon=" + lon + "&units=imperial" + APPID;
+   var apiUrl = "https://api.openweathermap.org/data/2.5/onecall?lat=" + lat + "&lon=" + lon + "&units=imperial" + APPID;
 
 
 
