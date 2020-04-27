@@ -141,10 +141,25 @@ var getCurrentWeather = function(str) {
             divCardBodyCurrent.append(titleCurrent);
 
             inputSearch.innerHTML = "";
+            //arrayRemove(cities, currentCity);
+            cities.pop();
+            if (cities.length !== 0) {
+               currentCity = cities[cities.length - 1];
+            }
+            showCities();
+            getCurrentWeather(currentCity);
+            console.log(currentCity);
          }
       })
       .catch(function(error) {
          console.log(error);
+   });
+}
+
+var arrayRemove = function(arr, value) { 
+   console.log("hit array remove utility");
+   return arr.filter(function(ele) { 
+      return ele != value; 
    });
 }
 
