@@ -6,4 +6,4 @@
 
 
 ## Image
-![Image of weather dashboard](https://feuerbacherb.github.io/weather-dashboard/images/weather-dashboard.jpg)
+![Image of weather dashboard](https://feuerbacherb.github.io/weather-dashboard/assets/images/weather-dashboard.jpg)
